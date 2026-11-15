@@ -36,4 +36,5 @@ sprite_frames = SubResource("SpriteFrames_5febu")
 [node name="PlayerHitbox" type="Area2D" parent="." unique_id=55610418]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerHitbox" unique_id=139164366]
+position = Vector2(2, -1)
 shape = SubResource("RectangleShape2D_5febu")
