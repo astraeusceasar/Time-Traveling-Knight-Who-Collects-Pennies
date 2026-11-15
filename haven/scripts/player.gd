@@ -32,6 +32,7 @@ enum PlayerStates {
 
 var state: PlayerStates = PlayerStates.IDLE
 var positions: Array[Vector2]
+var bounce: bool = false
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var ghost: AnimatedSprite2D = $Ghost
@@ -49,7 +50,9 @@ func _ready() -> void:
 	
 	
 func _physics_process(delta: float) -> void:
-	
+	if (Input.is_action_just_pressed("reset")):
+		reset()
+		return
 	process_input()
 	process_movement(delta)
 		
@@ -86,7 +89,9 @@ func process_movement(delta: float) -> void:
 	sprint = Input.is_action_pressed("sprint")
 	if !is_on_floor():
 		velocity.y += get_gravity().y * delta * GRAVITY_SCALAR
-	
+	if (bounce):
+		bounce = false
+		velocity.y = -1000
 	match state:
 		PlayerStates.MOVE:
 			if Input.is_action_just_pressed("up") && is_on_floor():
@@ -159,6 +164,10 @@ func take_damage(damage: int = 1):
 	animated_sprite_2d.play("hurt")
 	health -= damage
 
+func reset():
+	health = 3
+	state = PlayerStates.IDLE
+	get_tree().reload_current_scene()
 
 func _on_rewind_replay_timer_frame_timeout() -> void:
 	rewind_capture_timer_frame.stop()
@@ -177,12 +186,12 @@ func _on_rewind_capture_timer_frame_timeout() -> void:
 	if (state != PlayerStates.REWIND):
 		rewind_capture_timer_frame.start(REWIND_RECORD_DELAY)
 	
-
-
 func _on_player_hitbox_area_entered(area: Area2D) -> void:
 	if (area.name == "EnemyHitbox"):
 		if (state != PlayerStates.HURT && state != PlayerStates.DEAD):
 			take_damage()
+	if (area.name == "TrampolineHitbox"):
+		bounce = true
 
 
 func _on_animated_sprite_2d_animation_finished() -> void:
@@ -196,9 +205,11 @@ func _on_animated_sprite_2d_animation_finished() -> void:
 			die.emit()
 		else:
 			state = PlayerStates.IDLE
-			
-
+	elif (state == PlayerStates.DEAD):
+		reset()
+		
 
 func _on_sword_hitbox_body_entered(body: Node2D) -> void:
 	if (body.name == "Enemy"):
 		body.take_damage()
+	
