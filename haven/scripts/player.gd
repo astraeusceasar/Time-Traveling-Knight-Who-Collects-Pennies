@@ -45,8 +45,9 @@ signal die
 func _ready() -> void:
 	ghost.modulate.a = 0.2
 	sword_hitbox_offset = sword_hitbox.position
+	sword_hitbox.monitoring = false
 	
-
+	
 func _physics_process(delta: float) -> void:
 	
 	process_input()
@@ -136,7 +137,7 @@ func manage_attacks():
 		update_sword_hitbox()
 		if (state == PlayerStates.IDLE || state == PlayerStates.MOVE):
 			state = PlayerStates.ATTACK
-			sword_hitbox.monitorable = true
+			sword_hitbox.monitoring = true
 			if (attack_anim == 0):
 				animated_sprite_2d.play("attack_0")
 				attack_anim = 1
@@ -186,7 +187,7 @@ func _on_player_hitbox_area_entered(area: Area2D) -> void:
 
 func _on_animated_sprite_2d_animation_finished() -> void:
 	if (state == PlayerStates.ATTACK):
-		sword_hitbox.monitorable = false
+		sword_hitbox.monitoring = false
 		state = PlayerStates.IDLE
 	elif (state == PlayerStates.HURT):
 		if (health <= 0):
@@ -196,3 +197,8 @@ func _on_animated_sprite_2d_animation_finished() -> void:
 		else:
 			state = PlayerStates.IDLE
 			
+
+
+func _on_sword_hitbox_body_entered(body: Node2D) -> void:
+	if (body.name == "Enemy"):
+		body.take_damage()

@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://bh8dceucisxik"]
+
+[ext_resource type="Script" uid="uid://b5ryvc6b4scvr" path="res://scripts/spike.gd" id="1_cx2lw"]
+[ext_resource type="Texture2D" uid="uid://dnq88k2w6aq8a" path="res://assets/spikes.png" id="2_7a7y0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pslqn"]
+size = Vector2(34, 38)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6453q"]
+size = Vector2(25.714285, 27.85714)
+
+[node name="Spike" type="CharacterBody2D" unique_id=1057816932]
+script = ExtResource("1_cx2lw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1531403586]
+shape = SubResource("RectangleShape2D_pslqn")
+
+[node name="EnemyHitbox" type="Area2D" parent="." unique_id=1371585375]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyHitbox" unique_id=1188538015]
+position = Vector2(-7.1525574e-07, -0.5000001)
+scale = Vector2(1.4, 1.4)
+shape = SubResource("RectangleShape2D_6453q")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1177637182]
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("2_7a7y0")
+
+[connection signal="area_entered" from="EnemyHitbox" to="." method="_on_enemy_hitbox_area_entered"]

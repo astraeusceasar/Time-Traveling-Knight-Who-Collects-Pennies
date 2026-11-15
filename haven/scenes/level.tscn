@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://bdeejtjx1h68x" path="res://assets/Assets.png" id="1_2q6dc"]
 [ext_resource type="PackedScene" uid="uid://bqj3v7eydoca6" path="res://scenes/enemy.tscn" id="2_w7c3h"]
+[ext_resource type="PackedScene" uid="uid://bh8dceucisxik" path="res://scenes/spike.tscn" id="3_w8frs"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w7c3h"]
 texture = ExtResource("1_2q6dc")
@@ -378,3 +379,6 @@ tile_set = SubResource("TileSet_5febu")
 
 [node name="Enemy" parent="." unique_id=1057816932 instance=ExtResource("2_w7c3h")]
 position = Vector2(281, 321)
+
+[node name="Spike" parent="." unique_id=1455242842 instance=ExtResource("3_w8frs")]
+position = Vector2(393, 445)
