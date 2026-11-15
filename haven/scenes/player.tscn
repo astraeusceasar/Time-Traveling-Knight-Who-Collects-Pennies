@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dkwatx0ruyqiw"]
 
-[ext_resource type="Script" uid="uid://c3mki0uqdsjsh" path="res://scenes/player.gd" id="1_g2els"]
+[ext_resource type="Script" uid="uid://c3mki0uqdsjsh" path="res://scripts/player.gd" id="1_g2els"]
 [ext_resource type="Texture2D" uid="uid://b6t47lf32p80a" path="res://icon.svg" id="2_qhqgy"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6453q"]
@@ -21,6 +21,9 @@ animations = [{
 "speed": 5.0
 }]
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5febu"]
+size = Vector2(127, 126)
+
 [node name="Player" type="CharacterBody2D" unique_id=1714467073]
 script = ExtResource("1_g2els")
 
@@ -29,3 +32,8 @@ shape = SubResource("RectangleShape2D_6453q")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=429524988]
 sprite_frames = SubResource("SpriteFrames_5febu")
+
+[node name="PlayerHitbox" type="Area2D" parent="." unique_id=55610418]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerHitbox" unique_id=139164366]
+shape = SubResource("RectangleShape2D_5febu")
