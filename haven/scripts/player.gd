@@ -7,7 +7,7 @@ const SPRINT_SPEED: float = 600.0
 const JUMP_VELOCITY: float = -700.0
 const ACCEL: float = 1500
 const GRAVITY_SCALAR: float = 1
-const MAX_REWIND_POSITIONS: int = 100
+#const MAX_REWIND_POSITIONS: int = 100
 const REWIND_FRAME_DELAY: float = 0.00001
 const REWIND_RECORD_DELAY: float = 0.01
 
@@ -33,6 +33,7 @@ enum PlayerStates {
 var state: PlayerStates = PlayerStates.IDLE
 var positions: Array[Vector2]
 var bounce: bool = false
+var inited_anchor = false
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var ghost: AnimatedSprite2D = $Ghost
@@ -80,6 +81,9 @@ func process_input():
 			state = PlayerStates.IDLE
 
 func process_movement(delta: float) -> void:
+	if (Input.is_action_just_pressed("anchor")):
+		positions = []
+		inited_anchor = true
 	if (Input.is_action_just_pressed("rewind")):
 		#print(positions)
 		#print("rewind")
@@ -115,9 +119,11 @@ func process_movement(delta: float) -> void:
 
 func play_animation() -> void:
 	if (positions):
+		ghost.show()
 		ghost.global_position = positions[0]
 		ghost.play("idle")
-	
+	else:
+		ghost.hide()
 	animated_sprite_2d.flip_h = last_dir < 0
 	ghost.flip_h = last_dir < 0
 	
@@ -175,14 +181,15 @@ func _on_rewind_replay_timer_frame_timeout() -> void:
 		position = positions.pop_back()
 		rewind_replay_timer_frame.start(REWIND_FRAME_DELAY)
 	else:
+		positions = []
+		inited_anchor = false
 		state = PlayerStates.IDLE
 		rewind_replay_timer_frame.stop()
 		
 
 func _on_rewind_capture_timer_frame_timeout() -> void:
-	positions.push_back(position)
-	if (positions.size() > MAX_REWIND_POSITIONS):
-		positions.remove_at(0)
+	if (inited_anchor):
+		positions.push_back(position)
 	if (state != PlayerStates.REWIND):
 		rewind_capture_timer_frame.start(REWIND_RECORD_DELAY)
 	
