@@ -6,5 +6,7 @@
 [node name="main" type="Node2D" unique_id=1696732936]
 
 [node name="Level" parent="." unique_id=45609090 instance=ExtResource("1_0wfyh")]
+scale = Vector2(4, 4)
 
 [node name="Player" parent="." unique_id=1714467073 instance=ExtResource("2_sugp2")]
+scale = Vector2(4, 4)
