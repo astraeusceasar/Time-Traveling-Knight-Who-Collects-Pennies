@@ -7,9 +7,6 @@ const SPRINT_SPEED: float = 600.0
 const JUMP_VELOCITY: float = -700.0
 const ACCEL: float = 1500
 const GRAVITY_SCALAR: float = 1
-const MAX_REWIND_POSITIONS: int = 100
-const REWIND_FRAME_DELAY: float = 0.00001
-const REWIND_RECORD_DELAY: float = 0.01
 
 var input: Vector2 = Vector2(0,0)
 
@@ -25,16 +22,10 @@ enum PlayerStates {
 
 
 var state: PlayerStates = PlayerStates.IDLE
-var positions: Array[Vector2]
+var positions := [Vector2]
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
-@onready var ghost: AnimatedSprite2D = $Ghost
 
-@onready var rewind_replay_timer_frame: Timer = $RewindReplayTimerFrame
-@onready var rewind_capture_timer_frame: Timer = $RewindCaptureTimerFrame
-
-func _ready() -> void:
-	ghost.modulate.a = 0.2
 	
 
 func _physics_process(delta: float) -> void:
@@ -45,10 +36,8 @@ func _physics_process(delta: float) -> void:
 	play_animation()
 	move_and_slide()
 	
-	if (state == PlayerStates.MOVE || state == PlayerStates.IDLE):
-		if (rewind_capture_timer_frame.is_stopped()):
-			rewind_capture_timer_frame.start(REWIND_RECORD_DELAY)
-		
+	if (state == PlayerStates.MOVE):
+		positions.append()
 	
 		
 
@@ -63,71 +52,28 @@ func process_input():
 		state = PlayerStates.IDLE
 
 func process_movement(delta: float) -> void:
-	if (Input.is_action_just_pressed("rewind")):
-		print(positions)
-		print("rewind")
-		rewind_capture_timer_frame.stop()
-		rewind_replay_timer_frame.start(REWIND_FRAME_DELAY)
-		
 	sprint = Input.is_action_pressed("sprint")
 	if !is_on_floor():
 		velocity.y += get_gravity().y * delta * GRAVITY_SCALAR
 	
-	match state:
-		PlayerStates.MOVE:
-			if Input.is_action_just_pressed("up") && is_on_floor():
-				velocity.y = JUMP_VELOCITY
+	if (state == PlayerStates.MOVE):
 			
-			if (sprint):
-				velocity.x = move_toward(velocity.x, input.x * SPRINT_SPEED, ACCEL * delta)
-			else:
-				velocity.x = move_toward(velocity.x, input.x * SPEED, ACCEL * delta)
-		PlayerStates.REWIND:
-			if (!positions):
-				state = PlayerStates.IDLE
-			else:
-				position = positions.pop_back()
-		_:
-			velocity.x = move_toward(velocity.x, 0, ACCEL * delta)
+		if Input.is_action_just_pressed("up") && is_on_floor():
+			velocity.y = JUMP_VELOCITY
+		
+		if (sprint):
+			velocity.x = move_toward(velocity.x, input.x * SPRINT_SPEED, ACCEL * delta)
+		else:
+			velocity.x = move_toward(velocity.x, input.x * SPEED, ACCEL * delta)
+		
+	else:
+		velocity.x = move_toward(velocity.x, 0, ACCEL * delta)
 		
 	if (Input.get_axis("left", "right")):
 		last_dir = Input.get_axis("left", "right")
 
 
 func play_animation() -> void:
-	if (positions):
-		ghost.global_position = positions[0]
-	
 	animated_sprite_2d.flip_h = last_dir < 0
-	#if (state == PlayerStates.MOVE):
-		#if (sprint):
-			#animated_sprite_2d.play("run_right")
-			
-		#else:
-			#animated_sprite_2d.play("walk_right")
-			
-	#else:
-		#animated_sprite_2d.play("idle_right")
-		
 	
-
 			
-
-
-func _on_rewind_replay_timer_frame_timeout() -> void:
-	rewind_capture_timer_frame.stop()
-	if (positions):
-		position = positions.pop_back()
-		rewind_replay_timer_frame.start(REWIND_FRAME_DELAY)
-	else:
-		state = PlayerStates.IDLE
-		rewind_replay_timer_frame.stop()
-		
-
-func _on_rewind_capture_timer_frame_timeout() -> void:
-	positions.push_back(position)
-	if (positions.size() > MAX_REWIND_POSITIONS):
-		positions.remove_at(0)
-	if (state != PlayerStates.REWIND):
-		rewind_capture_timer_frame.start(REWIND_RECORD_DELAY)
-	
