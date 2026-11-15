@@ -1,3 +1,31 @@
 [gd_scene format=3 uid="uid://dkwatx0ruyqiw"]
 
+[ext_resource type="Script" uid="uid://c3mki0uqdsjsh" path="res://scenes/player.gd" id="1_g2els"]
+[ext_resource type="Texture2D" uid="uid://b6t47lf32p80a" path="res://icon.svg" id="2_qhqgy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6453q"]
+size = Vector2(126, 125)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dqkch"]
+atlas = ExtResource("2_qhqgy")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5febu"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dqkch")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
 [node name="Player" type="CharacterBody2D" unique_id=1714467073]
+script = ExtResource("1_g2els")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1883154782]
+shape = SubResource("RectangleShape2D_6453q")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=429524988]
+sprite_frames = SubResource("SpriteFrames_5febu")
