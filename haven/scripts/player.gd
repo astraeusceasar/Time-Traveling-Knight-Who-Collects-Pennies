@@ -16,6 +16,7 @@ var input: Vector2 = Vector2(0,0)
 var last_dir: float = 1
 var sprint: bool = false
 var health: int = 3
+var sword_hitbox_offset: Vector2
 
 var attack_anim: int = 0
 
@@ -37,11 +38,13 @@ var positions: Array[Vector2]
 
 @onready var rewind_replay_timer_frame: Timer = $RewindReplayTimerFrame
 @onready var rewind_capture_timer_frame: Timer = $RewindCaptureTimerFrame
-@onready var sword_right: Area2D = $SwordRight
-@onready var sword_left: Area2D = $SwordLeft
+@onready var sword_hitbox: Area2D = $SwordHitbox
+
+signal die
 
 func _ready() -> void:
 	ghost.modulate.a = 0.2
+	sword_hitbox_offset = sword_hitbox.position
 	
 
 func _physics_process(delta: float) -> void:
@@ -112,7 +115,7 @@ func play_animation() -> void:
 	animated_sprite_2d.flip_h = last_dir < 0
 	ghost.flip_h = last_dir < 0
 	
-	if Input.is_action_just_pressed("up") && is_on_floor():
+	if Input.is_action_just_pressed("up") && is_on_floor() && state != PlayerStates.DEAD:
 		animated_sprite_2d.play("jump")
 		return
 				
@@ -129,14 +132,11 @@ func play_animation() -> void:
 		
 	
 func manage_attacks():
-	if (Input.is_action_just_pressed("attack") && state != PlayerStates.ATTACK):
+	if (Input.is_action_just_pressed("attack") && state != PlayerStates.ATTACK && state != PlayerStates.DEAD):
+		update_sword_hitbox()
 		if (state == PlayerStates.IDLE || state == PlayerStates.MOVE):
 			state = PlayerStates.ATTACK
-			if (last_dir > 0):
-				sword_right.monitorable = true
-			else:
-				sword_left.monitorable = true
-				
+			sword_hitbox.monitorable = true
 			if (attack_anim == 0):
 				animated_sprite_2d.play("attack_0")
 				attack_anim = 1
@@ -144,6 +144,14 @@ func manage_attacks():
 				animated_sprite_2d.play("attack_1")
 				attack_anim = 0
 	
+func update_sword_hitbox():
+	var x := sword_hitbox_offset.x
+	var y := sword_hitbox_offset.y
+	
+	if (last_dir < 0):
+		sword_hitbox.position = Vector2(-x, y)
+	else:
+		sword_hitbox.position = Vector2(x, y)
 
 func take_damage(damage: int = 1):
 	state = PlayerStates.HURT
@@ -172,11 +180,19 @@ func _on_rewind_capture_timer_frame_timeout() -> void:
 
 func _on_player_hitbox_area_entered(area: Area2D) -> void:
 	if (area.name == "EnemyHitbox"):
-		take_damage()
+		if (state != PlayerStates.HURT && state != PlayerStates.DEAD):
+			take_damage()
 
 
 func _on_animated_sprite_2d_animation_finished() -> void:
 	if (state == PlayerStates.ATTACK):
-		sword_left.monitorable = false
-		sword_right.monitorable = false
+		sword_hitbox.monitorable = false
 		state = PlayerStates.IDLE
+	elif (state == PlayerStates.HURT):
+		if (health <= 0):
+			state = PlayerStates.DEAD
+			animated_sprite_2d.play("die")
+			die.emit()
+		else:
+			state = PlayerStates.IDLE
+			
