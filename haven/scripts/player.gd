@@ -15,12 +15,17 @@ var input: Vector2 = Vector2(0,0)
 
 var last_dir: float = 1
 var sprint: bool = false
+var health: int = 3
 
+var attack_anim: int = 0
 
 enum PlayerStates {
 	IDLE,
 	MOVE,
 	REWIND,
+	ATTACK,
+	HURT,
+	DEAD,
 }
 
 
@@ -32,6 +37,8 @@ var positions: Array[Vector2]
 
 @onready var rewind_replay_timer_frame: Timer = $RewindReplayTimerFrame
 @onready var rewind_capture_timer_frame: Timer = $RewindCaptureTimerFrame
+@onready var sword_right: Area2D = $SwordRight
+@onready var sword_left: Area2D = $SwordLeft
 
 func _ready() -> void:
 	ghost.modulate.a = 0.2
@@ -42,8 +49,10 @@ func _physics_process(delta: float) -> void:
 	process_input()
 	process_movement(delta)
 		
+	manage_attacks()
 	play_animation()
 	move_and_slide()
+	
 	
 	if (state == PlayerStates.MOVE || state == PlayerStates.IDLE):
 		if (rewind_capture_timer_frame.is_stopped()):
@@ -57,15 +66,16 @@ func process_input():
 	if (input.length() > 1.0):
 		input = input.normalized()
 	
-	if (input):
-		state = PlayerStates.MOVE
-	else:
-		state = PlayerStates.IDLE
+	if (state == PlayerStates.MOVE || state == PlayerStates.IDLE):
+		if (input):
+			state = PlayerStates.MOVE
+		else:
+			state = PlayerStates.IDLE
 
 func process_movement(delta: float) -> void:
 	if (Input.is_action_just_pressed("rewind")):
-		print(positions)
-		print("rewind")
+		#print(positions)
+		#print("rewind")
 		rewind_capture_timer_frame.stop()
 		rewind_replay_timer_frame.start(REWIND_FRAME_DELAY)
 		
@@ -97,21 +107,48 @@ func process_movement(delta: float) -> void:
 func play_animation() -> void:
 	if (positions):
 		ghost.global_position = positions[0]
+		ghost.play("idle")
 	
 	animated_sprite_2d.flip_h = last_dir < 0
-	#if (state == PlayerStates.MOVE):
-		#if (sprint):
-			#animated_sprite_2d.play("run_right")
-			
-		#else:
-			#animated_sprite_2d.play("walk_right")
-			
-	#else:
-		#animated_sprite_2d.play("idle_right")
+	ghost.flip_h = last_dir < 0
+	
+	if Input.is_action_just_pressed("up") && is_on_floor():
+		animated_sprite_2d.play("jump")
+		return
+				
+	match state:
+		PlayerStates.MOVE:
+			if (velocity.y == 0):
+				if (sprint):
+					animated_sprite_2d.play("run")
+				else:
+					animated_sprite_2d.play("walk")
+		PlayerStates.IDLE:
+			if (velocity.y == 0):
+				animated_sprite_2d.play("idle")
 		
 	
+func manage_attacks():
+	if (Input.is_action_just_pressed("attack") && state != PlayerStates.ATTACK):
+		if (state == PlayerStates.IDLE || state == PlayerStates.MOVE):
+			state = PlayerStates.ATTACK
+			if (last_dir > 0):
+				sword_right.monitorable = true
+			else:
+				sword_left.monitorable = true
+				
+			if (attack_anim == 0):
+				animated_sprite_2d.play("attack_0")
+				attack_anim = 1
+			else:
+				animated_sprite_2d.play("attack_1")
+				attack_anim = 0
+	
 
-			
+func take_damage(damage: int = 1):
+	state = PlayerStates.HURT
+	animated_sprite_2d.play("hurt")
+	health -= damage
 
 
 func _on_rewind_replay_timer_frame_timeout() -> void:
@@ -131,3 +168,15 @@ func _on_rewind_capture_timer_frame_timeout() -> void:
 	if (state != PlayerStates.REWIND):
 		rewind_capture_timer_frame.start(REWIND_RECORD_DELAY)
 	
+
+
+func _on_player_hitbox_area_entered(area: Area2D) -> void:
+	if (area.name == "EnemyHitbox"):
+		take_damage()
+
+
+func _on_animated_sprite_2d_animation_finished() -> void:
+	if (state == PlayerStates.ATTACK):
+		sword_left.monitorable = false
+		sword_right.monitorable = false
+		state = PlayerStates.IDLE
