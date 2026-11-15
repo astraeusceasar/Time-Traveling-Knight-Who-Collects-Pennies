@@ -33,8 +33,20 @@ shape = SubResource("RectangleShape2D_6453q")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=429524988]
 sprite_frames = SubResource("SpriteFrames_5febu")
 
+[node name="Ghost" type="AnimatedSprite2D" parent="." unique_id=2050229407]
+sprite_frames = SubResource("SpriteFrames_5febu")
+
 [node name="PlayerHitbox" type="Area2D" parent="." unique_id=55610418]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="PlayerHitbox" unique_id=139164366]
 position = Vector2(2, -1)
 shape = SubResource("RectangleShape2D_5febu")
+
+[node name="RewindReplayTimerFrame" type="Timer" parent="." unique_id=56227200]
+
+[node name="RewindCaptureTimerFrame" type="Timer" parent="." unique_id=338712816]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1105286112]
+
+[connection signal="timeout" from="RewindReplayTimerFrame" to="." method="_on_rewind_replay_timer_frame_timeout"]
+[connection signal="timeout" from="RewindCaptureTimerFrame" to="." method="_on_rewind_capture_timer_frame_timeout"]
