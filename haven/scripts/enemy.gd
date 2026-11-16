@@ -1,7 +1,7 @@
 class_name Enemy
 extends CharacterBody2D
 
-const SPEED = 300.0
+const SPEED = 100.0
 const JUMP_VELOCITY = -400.0
 
 enum EnemyTypes {
@@ -14,7 +14,10 @@ enum EnemyTypes {
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var enemy_hitbox: Area2D = $EnemyHitbox
 
+var coin_path := preload("res://scenes/coin.tscn")
+
 var direction: float = 1
+var dead: bool = false
 
 var health: int = 1
 
@@ -25,6 +28,8 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func movement(delta: float):
+	if (dead):
+		return
 	if not is_on_floor():
 		velocity += get_gravity() * delta
 		
@@ -40,16 +45,17 @@ func movement(delta: float):
 func play_animation() -> void:
 	animated_sprite_2d.flip_h = direction < 0
 				
-	animated_sprite_2d.play("walk")
+	if (!dead):
+		animated_sprite_2d.play("walk")
 
 
 
-func _on_enemy_hitbox_area_entered(area: Area2D) -> void:
-	print(area.name)
-	if (area.name == "SwordRight" || area.name == "SwordLeft"):
-		health -= 1
-		if (health <= 0):
-			animated_sprite_2d.play("die")
+func take_damage() -> void:
+	print("ouch")
+	health -= 1
+	if (health <= 0):
+		dead = true
+		animated_sprite_2d.play("death")
 		
 		
 
@@ -57,4 +63,8 @@ func _on_enemy_hitbox_area_entered(area: Area2D) -> void:
 
 func _on_animated_sprite_2d_animation_finished() -> void:
 	if health <= 0:
+		var coin := coin_path.instantiate()
+		coin.global_position = global_position
+		coin.scale = Vector2(0.08, 0.08)
+		get_tree().current_scene.add_child.call_deferred(coin)
 		queue_free()

@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://csp73nsrdkme"]
+
+[ext_resource type="Script" uid="uid://ch5t12xj061t3" path="res://scripts/trampoline.gd" id="1_nytqh"]
+[ext_resource type="Texture2D" uid="uid://43dd5qroalfm" path="res://assets/trampoline.jpg" id="2_nytqh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6453q"]
+size = Vector2(647.85706, 418.57138)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1ne3y"]
+atlas = ExtResource("2_nytqh")
+region = Rect2(0, 0, 900, 580)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_5febu"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1ne3y")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="Trampoline" type="CharacterBody2D" unique_id=1057816932]
+script = ExtResource("1_nytqh")
+
+[node name="TrampolineHitbox" type="Area2D" parent="." unique_id=1371585375]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TrampolineHitbox" unique_id=1188538015]
+position = Vector2(-0.49998474, 1)
+scale = Vector2(1.4, 1.4)
+shape = SubResource("RectangleShape2D_6453q")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1983509683]
+sprite_frames = SubResource("SpriteFrames_5febu")
+
+[connection signal="area_entered" from="TrampolineHitbox" to="." method="_on_enemy_hitbox_area_entered"]

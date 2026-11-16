@@ -535,3 +535,4 @@ shape = SubResource("RectangleShape2D_pslqn")
 [connection signal="area_entered" from="PlayerHitbox" to="." method="_on_player_hitbox_area_entered"]
 [connection signal="timeout" from="RewindReplayTimerFrame" to="." method="_on_rewind_replay_timer_frame_timeout"]
 [connection signal="timeout" from="RewindCaptureTimerFrame" to="." method="_on_rewind_capture_timer_frame_timeout"]
+[connection signal="body_entered" from="SwordHitbox" to="." method="_on_sword_hitbox_body_entered"]

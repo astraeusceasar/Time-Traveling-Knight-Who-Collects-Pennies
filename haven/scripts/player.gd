@@ -7,7 +7,7 @@ const SPRINT_SPEED: float = 600.0
 const JUMP_VELOCITY: float = -700.0
 const ACCEL: float = 1500
 const GRAVITY_SCALAR: float = 1
-const MAX_REWIND_POSITIONS: int = 100
+#const MAX_REWIND_POSITIONS: int = 100
 const REWIND_FRAME_DELAY: float = 0.00001
 const REWIND_RECORD_DELAY: float = 0.01
 
@@ -15,7 +15,7 @@ var input: Vector2 = Vector2(0,0)
 
 var last_dir: float = 1
 var sprint: bool = false
-var health: int = 3
+var health: int = 5
 var sword_hitbox_offset: Vector2
 
 var attack_anim: int = 0
@@ -32,6 +32,8 @@ enum PlayerStates {
 
 var state: PlayerStates = PlayerStates.IDLE
 var positions: Array[Vector2]
+var bounce: bool = false
+var inited_anchor = false
 
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var ghost: AnimatedSprite2D = $Ghost
@@ -40,15 +42,26 @@ var positions: Array[Vector2]
 @onready var rewind_capture_timer_frame: Timer = $RewindCaptureTimerFrame
 @onready var sword_hitbox: Area2D = $SwordHitbox
 
+signal anchor_created
+signal anchor_used
+signal coin_up
+
 signal die
+
+signal update_health(health: int)
 
 func _ready() -> void:
 	ghost.modulate.a = 0.2
 	sword_hitbox_offset = sword_hitbox.position
+	sword_hitbox.monitoring = false
+	update_health.emit(health)
 	
-
+	
 func _physics_process(delta: float) -> void:
-	
+	#print(position.y)
+	if (Input.is_action_just_pressed("reset") || position.y > 5000):
+		reset()
+		return
 	process_input()
 	process_movement(delta)
 		
@@ -76,7 +89,12 @@ func process_input():
 			state = PlayerStates.IDLE
 
 func process_movement(delta: float) -> void:
+	if (Input.is_action_just_pressed("anchor")):
+		positions = []
+		inited_anchor = true
+		anchor_created.emit()
 	if (Input.is_action_just_pressed("rewind")):
+		anchor_used.emit()
 		#print(positions)
 		#print("rewind")
 		rewind_capture_timer_frame.stop()
@@ -85,7 +103,9 @@ func process_movement(delta: float) -> void:
 	sprint = Input.is_action_pressed("sprint")
 	if !is_on_floor():
 		velocity.y += get_gravity().y * delta * GRAVITY_SCALAR
-	
+	if (bounce):
+		bounce = false
+		velocity.y = -1000
 	match state:
 		PlayerStates.MOVE:
 			if Input.is_action_just_pressed("up") && is_on_floor():
@@ -109,9 +129,11 @@ func process_movement(delta: float) -> void:
 
 func play_animation() -> void:
 	if (positions):
+		ghost.show()
 		ghost.global_position = positions[0]
 		ghost.play("idle")
-	
+	else:
+		ghost.hide()
 	animated_sprite_2d.flip_h = last_dir < 0
 	ghost.flip_h = last_dir < 0
 	
@@ -136,7 +158,7 @@ func manage_attacks():
 		update_sword_hitbox()
 		if (state == PlayerStates.IDLE || state == PlayerStates.MOVE):
 			state = PlayerStates.ATTACK
-			sword_hitbox.monitorable = true
+			sword_hitbox.monitoring = true
 			if (attack_anim == 0):
 				animated_sprite_2d.play("attack_0")
 				attack_anim = 1
@@ -157,7 +179,15 @@ func take_damage(damage: int = 1):
 	state = PlayerStates.HURT
 	animated_sprite_2d.play("hurt")
 	health -= damage
+	update_health.emit(health)
 
+func reset():
+	health = 3
+	state = PlayerStates.IDLE
+	get_tree().reload_current_scene()
+	
+func add_coin():
+	coin_up.emit()
 
 func _on_rewind_replay_timer_frame_timeout() -> void:
 	rewind_capture_timer_frame.stop()
@@ -165,28 +195,29 @@ func _on_rewind_replay_timer_frame_timeout() -> void:
 		position = positions.pop_back()
 		rewind_replay_timer_frame.start(REWIND_FRAME_DELAY)
 	else:
+		positions = []
+		inited_anchor = false
 		state = PlayerStates.IDLE
 		rewind_replay_timer_frame.stop()
 		
 
 func _on_rewind_capture_timer_frame_timeout() -> void:
-	positions.push_back(position)
-	if (positions.size() > MAX_REWIND_POSITIONS):
-		positions.remove_at(0)
+	if (inited_anchor):
+		positions.push_back(position)
 	if (state != PlayerStates.REWIND):
 		rewind_capture_timer_frame.start(REWIND_RECORD_DELAY)
 	
-
-
 func _on_player_hitbox_area_entered(area: Area2D) -> void:
 	if (area.name == "EnemyHitbox"):
 		if (state != PlayerStates.HURT && state != PlayerStates.DEAD):
 			take_damage()
+	if (area.name == "TrampolineHitbox"):
+		bounce = true
 
 
 func _on_animated_sprite_2d_animation_finished() -> void:
 	if (state == PlayerStates.ATTACK):
-		sword_hitbox.monitorable = false
+		sword_hitbox.monitoring = false
 		state = PlayerStates.IDLE
 	elif (state == PlayerStates.HURT):
 		if (health <= 0):
@@ -195,4 +226,11 @@ func _on_animated_sprite_2d_animation_finished() -> void:
 			die.emit()
 		else:
 			state = PlayerStates.IDLE
-			
+	elif (state == PlayerStates.DEAD):
+		reset()
+		
+
+func _on_sword_hitbox_body_entered(body: Node2D) -> void:
+	if (body.name == "Enemy"):
+		body.take_damage()
+	
