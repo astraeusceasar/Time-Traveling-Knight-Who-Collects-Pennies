@@ -15,7 +15,7 @@ var input: Vector2 = Vector2(0,0)
 
 var last_dir: float = 1
 var sprint: bool = false
-var health: int = 3
+var health: int = 5
 var sword_hitbox_offset: Vector2
 
 var attack_anim: int = 0
@@ -42,16 +42,24 @@ var inited_anchor = false
 @onready var rewind_capture_timer_frame: Timer = $RewindCaptureTimerFrame
 @onready var sword_hitbox: Area2D = $SwordHitbox
 
+signal anchor_created
+signal anchor_used
+signal coin_up
+
 signal die
+
+signal update_health(health: int)
 
 func _ready() -> void:
 	ghost.modulate.a = 0.2
 	sword_hitbox_offset = sword_hitbox.position
 	sword_hitbox.monitoring = false
+	update_health.emit(health)
 	
 	
 func _physics_process(delta: float) -> void:
-	if (Input.is_action_just_pressed("reset")):
+	#print(position.y)
+	if (Input.is_action_just_pressed("reset") || position.y > 5000):
 		reset()
 		return
 	process_input()
@@ -84,7 +92,9 @@ func process_movement(delta: float) -> void:
 	if (Input.is_action_just_pressed("anchor")):
 		positions = []
 		inited_anchor = true
+		anchor_created.emit()
 	if (Input.is_action_just_pressed("rewind")):
+		anchor_used.emit()
 		#print(positions)
 		#print("rewind")
 		rewind_capture_timer_frame.stop()
@@ -169,11 +179,15 @@ func take_damage(damage: int = 1):
 	state = PlayerStates.HURT
 	animated_sprite_2d.play("hurt")
 	health -= damage
+	update_health.emit(health)
 
 func reset():
 	health = 3
 	state = PlayerStates.IDLE
 	get_tree().reload_current_scene()
+	
+func add_coin():
+	coin_up.emit()
 
 func _on_rewind_replay_timer_frame_timeout() -> void:
 	rewind_capture_timer_frame.stop()

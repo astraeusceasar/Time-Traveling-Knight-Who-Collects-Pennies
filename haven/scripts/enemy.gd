@@ -14,6 +14,8 @@ enum EnemyTypes {
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 @onready var enemy_hitbox: Area2D = $EnemyHitbox
 
+var coin_path := preload("res://scenes/coin.tscn")
+
 var direction: float = 1
 var dead: bool = false
 
@@ -61,4 +63,8 @@ func take_damage() -> void:
 
 func _on_animated_sprite_2d_animation_finished() -> void:
 	if health <= 0:
+		var coin := coin_path.instantiate()
+		coin.global_position = global_position
+		coin.scale = Vector2(0.08, 0.08)
+		get_tree().current_scene.add_child.call_deferred(coin)
 		queue_free()
